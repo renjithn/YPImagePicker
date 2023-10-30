@@ -12,9 +12,11 @@ import AVFoundation
 
 /// A video view that contains video layer, supports play, pause and other actions.
 /// Supports xib initialization.
+///
+///
 public class YPVideoView: UIView {
     public let playImageView = UIImageView(image: nil)
-    
+    public weak var delegate: YPVideoViewDelegate?
     internal let playerView = UIView()
     internal let playerLayer = AVPlayerLayer()
     internal var previewImageView = UIImageView()
@@ -27,6 +29,11 @@ public class YPVideoView: UIView {
         playImageView.image = YPConfig.icons.playImage
         return player
     }
+    
+    public func mutePlayer(mute:Bool){
+        player.isMuted = mute
+    }
+
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
@@ -68,12 +75,15 @@ public class YPVideoView: UIView {
     
     @objc internal func singleTap() {
         pauseUnpause()
+        delegate?.playerDidChangeStatus(player.rate == 0.0, playerView: self)
     }
     
     @objc public func playerItemDidReachEnd(_ note: Notification) {
         player.actionAtItemEnd = .none
         player.seek(to: CMTime.zero)
-        player.play()
+        //player.play()
+        delegate?.playerDidEnd(self)
+
     }
 }
 
@@ -159,4 +169,10 @@ extension YPVideoView {
                                                   name: .AVPlayerItemDidPlayToEndTime,
                                                   object: player.currentItem)
     }
+}
+
+
+public protocol YPVideoViewDelegate: AnyObject {
+    func playerDidChangeStatus(_ pause:Bool, playerView: YPVideoView)
+    func playerDidEnd(_ playerView: YPVideoView)
 }
